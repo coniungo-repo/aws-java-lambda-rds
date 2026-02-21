@@ -56,6 +56,19 @@ Resources:
       StageName: Prod
       TracingEnabled: true
 
+  GetAllUsersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./
+      Handler: com.coniungo.app.handlers.GetAllUsersHandler::handleRequest
+      Events:
+        GetAllUsersApi:
+          Type: Api
+          Properties:
+            Path: /api/v1/users
+            Method: get
+            RestApiId: !Ref ConiungoUserServiceApi
+
   GetUserFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -71,7 +84,20 @@ Resources:
 
 Outputs:
   AwsJavaLambdaApi:
-    Description: "URL for the GetUser API"
+    Description: "Base URL for the API"
     Value: !Sub "https://${ConiungoUserServiceApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
     Export:
-      Name: AwsJavaLambdaApi
+      Name: !Sub "${AWS::StackName}-ApiUrl"
+
+
+  GetAllUsersFunctionArn:
+    Description: "ARN for GetAllUsers Lambda"
+    Value: !GetAtt GetAllUsersFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-GetAllUsersArn"
+
+  GetUserFunctionArn:
+    Description: "ARN for GetUser Lambda"
+    Value: !GetAtt GetUserFunction.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-GetUserArn"

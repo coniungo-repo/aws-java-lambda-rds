@@ -7,6 +7,6 @@ architecture = "x86_64"
 handler = "com.coniungo.app.handlers.GetUserHandler::handleRequest"
 manifest_hash = ""
 packagetype = "Zip"
-functions = ["GetUserFunction"]
+functions = ["GetAllUsersFunction", "GetUserFunction"]
 
 [layer_build_definitions]
