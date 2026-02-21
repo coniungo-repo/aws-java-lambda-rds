@@ -1,30 +1,77 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: AWS Serverless Spring Boot 2 API - com.coniungo.app::aws-java-lambda
+
+Parameters:
+  DBHost:
+    Type: String
+    Description: RDS Hostname
+  DBPort:
+    Type: String
+    Default: "5432"
+    Description: RDS Port
+  DBName:
+    Type: String
+    Description: Database name
+  DBUser:
+    Type: String
+    Description: Database username
+  DBPassword:
+    Type: String
+    Description: Database password
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID for Lambda functions
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnet IDs for Lambda functions
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+    Description: Security Group IDs for Lambda functions
+
 Globals:
   Api:
     EndpointConfiguration: REGIONAL
+  Function:
+    Timeout: 20
+    MemorySize: 512
+    Runtime: java21
+    Architectures:
+      - x86_64
+    Environment:
+      Variables:
+        DB_HOST: !Ref DBHost
+        DB_PORT: !Ref DBPort
+        DB_NAME: !Ref DBName
+        DB_USER: !Ref DBUser
+        DB_PASSWORD: !Ref DBPassword
+    VpcConfig:
+      SubnetIds: !Ref SubnetIds
+      SecurityGroupIds: !Ref SecurityGroupIds
 
 Resources:
-  AwsJavaLambdaFunction:
+  ConiungoUserServiceApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      TracingEnabled: true
+
+  GetUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: com.coniungo.app.StreamLambdaHandler::handleRequest
-      Runtime: java21
-      CodeUri: .
-      MemorySize: 512
-      Policies: AWSLambdaBasicExecutionRole
-      Timeout: 30
+      CodeUri: ./
+      Handler: com.coniungo.app.handlers.GetUserHandler::handleRequest
       Events:
-        ProxyResource:
+        GetUserApi:
           Type: Api
           Properties:
-            Path: /{proxy+}
-            Method: any
+            Path: /api/v1/user
+            Method: get
+            RestApiId: !Ref ConiungoUserServiceApi
 
 Outputs:
   AwsJavaLambdaApi:
-    Description: URL for application
-    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/ping'
+    Description: "URL for the GetUser API"
+    Value: !Sub "https://${ConiungoUserServiceApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
     Export:
       Name: AwsJavaLambdaApi
